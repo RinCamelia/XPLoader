@@ -28,6 +28,7 @@ layer_back_rgb_bytes = 3
 layer_cell_bytes = layer_keycode_bytes + layer_fore_rgb_bytes + layer_back_rgb_bytes
 
 
+
 ##################################
 # REXPaint color key for transparent background colors. Not directly used here, but you should reference this when calling libtcod's console_set_key_color on offscreen consoles.
 ##################################
@@ -36,6 +37,31 @@ transparent_cell_back_r = 255
 transparent_cell_back_g = 0
 transparent_cell_back_b = 255
 
+####################################################################
+# START LIBTCOD SPECIFIC CODE
+
+##################################
+# Used primarily internally to parse the data, feel free to reference them externally if it's useful. 
+# Changing these programattically will, of course, screw up the parsing (unless the format changes and you're using an old copy of this file)
+##################################
+
+#the solid square character
+poskey_tile_character = 219
+
+#some or all of the below may appear in libtcod's color definitions; and in fact, you can use libtcod colors as you please for position keys. 
+#These are merely the colors provided in the accompanying palette.
+
+poskey_color_red = libtcod.Color(255, 0, 0)
+poskey_color_lightpurple = libtcod.Color(254, 0, 255) # specifically 254 as 255, 0, 255 is considered a transparent key color in REXPaint
+poskey_color_orange = libtcod.Color(255, 128, 0)
+poskey_color_pink = libtcod.Color(255, 0, 128)
+poskey_color_green = libtcod.Color(0, 255, 0)
+poskey_color_teal = libtcod.Color(0, 255, 255)
+poskey_color_yellow = libtcod.Color(255, 255, 0)
+poskey_color_blue = libtcod.Color(0, 0, 255)
+poskey_color_lightblue = libtcod.Color(0, 128, 255)
+poskey_color_purple = libtcod.Color(128, 0, 255)
+poskey_color_white = libtcod.Color(255, 255, 255)
 
 ##################################
 # please note - this function writes the contents of transparent cells to the provided console. 
@@ -52,6 +78,23 @@ def load_layer_to_console(console, xp_file_layer):
 			fore_color = libtcod.Color(cell_data['fore_r'], cell_data['fore_g'], cell_data['fore_b'])
 			back_color = libtcod.Color(cell_data['back_r'], cell_data['back_g'], cell_data['back_b'])
 			libtcod.console_put_char_ex(console, x, y, cell_data['keycode'], fore_color, back_color)
+
+def get_position_key_xy(xp_file_layer, poskey_color):
+	for x in range(xp_file_layer['width']):
+		for y in range(xp_file_layer['height']):
+			cell_data = xp_file_layer['cells'][x][y]
+			if cell_data['keycode'] == poskey_tile_character:
+				fore_color_matches = cell_data['fore_r'] == poskey_color.r and cell_data['fore_g'] == poskey_color.g and cell_data['fore_b'] == poskey_color.b
+				back_color_matches = cell_data['back_r'] == poskey_color.r and cell_data['back_g'] == poskey_color.g and cell_data['back_b'] == poskey_color.b
+				if fore_color_matches or back_color_matches:
+					return (x, y)
+	raise LookupError('No position key was specified for color ' + str(poskey_color) + ', check your .xp file and/or the input color')
+
+
+# END LIBTCOD SPECIFIC CODE
+####################################################################
+
+
 
 
 ##################################
